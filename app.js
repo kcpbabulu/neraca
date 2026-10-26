@@ -5,6 +5,13 @@
   const state = { page:'dashboard', periods:[], kpi:[], dashboard:null, rbb:null, renbis:[], xray:[], movers:null, trends:null, costs:null, manual:[], database:[], targets:{}, charts:{}, cache:new Map(), pending:new Map(), selectedImport:null, actions:[], hierarchy:null, reportType:'executive', lastUpdated:null, navRequest:0 };
   const $ = (id) => document.getElementById(id);
   let eventsBound = false;
+  const AUTH_TOKEN_KEY = 'prime_ledger_session_token';
+  const AUTH_USER_KEY = 'prime_ledger_session_user';
+  const sessionToken = () => { try { return sessionStorage.getItem(AUTH_TOKEN_KEY) || ''; } catch (_) { return ''; } }
+  const saveSession = (token, username) => { try { sessionStorage.setItem(AUTH_TOKEN_KEY, token); sessionStorage.setItem(AUTH_USER_KEY, username || 'admin'); } catch (_) {} }
+  const clearSession = () => { try { sessionStorage.removeItem(AUTH_TOKEN_KEY); sessionStorage.removeItem(AUTH_USER_KEY); } catch (_) {} }
+  function showLogin(message='') { document.body.classList.remove('authenticated'); $('loginScreen').hidden=false; $('loginError').textContent=message; $('loginError').hidden=!message; $('loginSubmit').disabled=false; $('loginSubmit').innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Masuk'; }
+  function showApp() { document.body.classList.add('authenticated'); $('loginScreen').hidden=true; }
   const money = (v, digits=0) => Number.isFinite(Number(v)) ? new Intl.NumberFormat('id-ID',{maximumFractionDigits:digits,minimumFractionDigits:digits}).format(Number(v)) : '—';
   const moneyCompact = (v) => { const n=Number(v); if(!Number.isFinite(n)) return '—'; const a=Math.abs(n); if(a>=1e12)return `${(n/1e12).toLocaleString('id-ID',{maximumFractionDigits:2})} T`; if(a>=1e9)return `${(n/1e9).toLocaleString('id-ID',{maximumFractionDigits:2})} M`; if(a>=1e6)return `${(n/1e6).toLocaleString('id-ID',{maximumFractionDigits:2})} jt`; return money(n); };
   const pct = (v) => v === null || v === undefined || v === '' || !Number.isFinite(Number(v)) ? '—' : `${Number(v).toLocaleString('id-ID',{maximumFractionDigits:2})}%`;
@@ -25,12 +32,12 @@
 
   async function api(action, params={}, method='GET', options={}) {
     if (!cfg.API_URL || !/^https:\/\//i.test(cfg.API_URL)) throw new Error('API_URL belum dikonfigurasi pada config.js.');
-    const key=cacheKey(action,{...params,method}); const ttl=options.ttl ?? cfg.CACHE_TTL_MS ?? 60000;
+    const key=cacheKey(action,{...params,method,session:action==='login'?'login':(sessionToken()?'authenticated':'anonymous')}); const ttl=options.ttl ?? cfg.CACHE_TTL_MS ?? 60000;
     if(method==='GET' && !options.force) { const c=state.cache.get(key); if(c && Date.now()-c.time<ttl) return c.data; if(state.pending.has(key)) return state.pending.get(key); }
     const task=(async()=>{
       let url=new URL(cfg.API_URL); const init={method:'GET',redirect:'follow',cache:'no-store'};
-      if(method==='GET') { url.searchParams.set('action',action); Object.entries(params||{}).forEach(([k,v])=>{if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));}); }
-      else { init.method='POST'; init.headers={'Content-Type':'text/plain;charset=utf-8'}; init.body=JSON.stringify({action,...params}); }
+      if(method==='GET') { url.searchParams.set('action',action); Object.entries(params||{}).forEach(([k,v])=>{if(v!==undefined&&v!==null)url.searchParams.set(k,String(v));}); if(action!=='login' && sessionToken())url.searchParams.set('token',sessionToken()); }
+      else { init.method='POST'; init.headers={'Content-Type':'text/plain;charset=utf-8'}; init.body=JSON.stringify({action,...params,...(action==='login'?{}:{token:sessionToken()})}); }
       const controller=new AbortController(); init.signal=controller.signal;
       const timer=setTimeout(()=>controller.abort(),options.timeout||30000);
       let response, raw, result;
@@ -61,7 +68,7 @@
     if(!navigator.onLine)setConnection('offline','Tidak ada internet');
     loader(true,'Menghubungkan ke PRIME Ledger…');
     try { const periods=await api('getPeriodList',{},'GET',{force:true,ttl:0,timeout:20000}); state.periods=Array.isArray(periods)?periods:[]; fillPeriodSelectors(); setConnection('online','Backend terhubung'); $('dataNotice').querySelector('span').textContent=state.periods.length?`Tersedia ${state.periods.length} periode. Rekonsiliasi angka dengan laporan resmi sebelum digunakan.`:'Backend terhubung, tetapi belum ada periode neraca. Impor data melalui menu Database & Import.'; showPage('dashboard'); }
-    catch(e){ setConnection(navigator.onLine?'offline':'offline','Backend belum terhubung'); $('dataNotice').querySelector('span').textContent='Belum dapat membaca backend. Periksa API_URL, deployment Apps Script, otorisasi, dan izin CORS. Jangan gunakan angka lama sebagai angka terkini.'; showErrorPanel(e.message); }
+    catch(e){ if(/sesi tidak valid|kedaluwarsa|silakan login kembali/i.test(e.message||'')){clearSession();showLogin('Sesi login telah berakhir. Silakan masuk kembali.');return;} setConnection(navigator.onLine?'offline':'offline','Backend belum terhubung'); $('dataNotice').querySelector('span').textContent='Belum dapat membaca backend. Periksa API_URL, deployment Apps Script, otorisasi, dan izin CORS. Jangan gunakan angka lama sebagai angka terkini.'; showErrorPanel(e.message); }
     finally{loader(false);}
   }
   function bindEvents(){
@@ -131,5 +138,28 @@
   function downloadBlob(content,name,type){const blob=new Blob([content],{type}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
   async function confirmAction(title,message){const d=$('confirmDialog');$('dialogTitle').textContent=title;$('dialogMessage').textContent=message;if(typeof d.showModal!=='function')return window.confirm(`${title}\n\n${message}`);return new Promise(resolve=>{const handler=()=>{d.removeEventListener('close',handler);resolve(d.returnValue==='confirm')};d.addEventListener('close',handler);d.showModal();});}
   window.addEventListener('error',e=>{console.error('PRIME Ledger UI error',e.error||e.message);}); window.addEventListener('unhandledrejection',e=>{console.error('PRIME Ledger async error',e.reason);toast(e.reason?.message||'Terjadi kesalahan yang tidak terduga.','error');});
-  document.addEventListener('DOMContentLoaded',init);
+  async function handleLogin(e) {
+    e.preventDefault();
+    const username=$('loginUsername').value.trim(), password=$('loginPassword').value;
+    $('loginError').hidden=true; $('loginSubmit').disabled=true; $('loginSubmit').innerHTML='<span class="spinner"></span> Memverifikasi…';
+    try {
+      const result=await api('login',{username,password},'POST',{timeout:20000,ttl:0,force:true});
+      if(!result || !result.token)throw new Error('Backend tidak mengembalikan sesi login yang valid.');
+      saveSession(result.token,result.username); $('loginPassword').value=''; state.cache.clear(); state.pending.clear(); showApp(); await init();
+    } catch(err) { clearSession(); showLogin(err.message || 'Login gagal. Periksa username dan password.'); }
+    finally { $('loginSubmit').disabled=false; $('loginSubmit').innerHTML='<i class="fa-solid fa-right-to-bracket"></i> Masuk'; }
+  }
+  async function logout() {
+    const token=sessionToken();
+    try { if(token) await api('logout',{},'POST',{timeout:10000,ttl:0,force:true}); } catch (_) {}
+    clearSession(); state.cache.clear(); state.pending.clear(); state.periods=[]; state.kpi=[]; state.dashboard=null; state.rbb=null; state.renbis=[]; state.xray=[]; state.movers=null; state.trends=null; state.costs=null; state.manual=[]; state.database=[]; state.targets={}; state.actions=[]; showLogin(''); $('loginPassword').value=''; $('loginUsername').focus();
+  }
+  function boot() {
+    $('loginForm').addEventListener('submit',handleLogin);
+    $('togglePassword').addEventListener('click',()=>{const input=$('loginPassword'),show=input.type==='password';input.type=show?'text':'password';$('togglePassword').setAttribute('aria-label',show?'Sembunyikan password':'Tampilkan password');$('togglePassword').innerHTML=show?'<i class="fa-solid fa-eye-slash"></i>':'<i class="fa-solid fa-eye"></i>';});
+    $('logoutBtn').addEventListener('click',logout);
+    if(sessionToken()) { showApp(); init().catch(err=>{clearSession();showLogin(err.message||'Sesi berakhir. Silakan login kembali.');}); }
+    else showLogin('');
+  }
+  document.addEventListener('DOMContentLoaded',boot);
 })();

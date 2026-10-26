@@ -82,23 +82,34 @@
     finally{loader(false);}
   }
   function bindEvents(){
+    // Defensive event binding: prevents a login-to-app crash when cached HTML and JS
+    // briefly come from different deployments or an optional control is absent.
+    const listen = (id, eventName, handler) => {
+      const el = $(id);
+      if (!el) {
+        console.warn(`PRIME Ledger: elemen #${id} tidak ditemukan; event ${eventName} dilewati. Pastikan index.html dan app.js berasal dari rilis yang sama.`);
+        return false;
+      }
+      el.addEventListener(eventName, handler);
+      return true;
+    };
     document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
-    $('menuToggle').addEventListener('click',()=>{const open=document.body.classList.toggle('nav-open');$('menuToggle').setAttribute('aria-expanded',String(open));}); $('mobileBackdrop').addEventListener('click',()=>{document.body.classList.remove('nav-open');$('menuToggle').setAttribute('aria-expanded','false');});
-    $('themeToggle').addEventListener('click',toggleTheme); $('refreshBtn').addEventListener('click',()=>refreshCurrent(true));
-    $('globalSearchBtn').addEventListener('click',openCommandPalette); $('dashboardModeToggle').addEventListener('click',toggleDashboardMode);
-    ['auditTable','costTable','moversTable'].forEach(id=>{const table=$(id);table?.querySelector('thead')?.addEventListener('click',e=>{const th=e.target.closest('th');if(th)sortTableByHeader(table,th);});}); $('notificationBtn').addEventListener('click',openNotificationCenter); $('workspaceBtn').addEventListener('click',openWorkspace); $('globalSearchInput').addEventListener('input',renderGlobalSearch); $('globalSearchInput').addEventListener('keydown',handleGlobalSearchKeys); $('saveCurrentView').addEventListener('click',saveCurrentView); $('clearNotifications').addEventListener('click',clearNotifications); $('openAuditFromInsight').addEventListener('click',()=>showPage('audit'));
+    listen('menuToggle','click',()=>{const open=document.body.classList.toggle('nav-open');$('menuToggle')?.setAttribute('aria-expanded',String(open));}); listen('mobileBackdrop','click',()=>{document.body.classList.remove('nav-open');$('menuToggle')?.setAttribute('aria-expanded','false');});
+    listen('themeToggle','click',toggleTheme); listen('refreshBtn','click',()=>refreshCurrent(true));
+    listen('globalSearchBtn','click',openCommandPalette); listen('dashboardModeToggle','click',toggleDashboardMode);
+    ['auditTable','costTable','moversTable'].forEach(id=>{const table=$(id);table?.querySelector('thead')?.addEventListener('click',e=>{const th=e.target.closest('th');if(th)sortTableByHeader(table,th);});}); listen('notificationBtn','click',openNotificationCenter); listen('workspaceBtn','click',openWorkspace); listen('globalSearchInput','input',renderGlobalSearch); listen('globalSearchInput','keydown',handleGlobalSearchKeys); listen('saveCurrentView','click',saveCurrentView); listen('clearNotifications','click',clearNotifications); listen('openAuditFromInsight','click',()=>showPage('audit'));
     document.querySelectorAll('[data-close-dialog]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.closeDialog)?.close()));
     document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();openCommandPalette();} if(e.key==='Escape'){document.body.classList.remove('nav-open');$('menuToggle')?.setAttribute('aria-expanded','false');}});
-    $('kpiGrid').addEventListener('click',e=>{const fav=e.target.closest('[data-favorite-kpi]');if(fav){e.stopPropagation();toggleFavoriteKpi(fav.dataset.favoriteKpi);return;}});
-    $('periodSelector').addEventListener('change',()=>{invalidateCache();refreshCurrent(true);}); $('compareSelector').addEventListener('change',()=>{invalidateCache();refreshCurrent(true);}); $('kpiGrid').addEventListener('click',e=>{if(e.target.closest('[data-favorite-kpi]'))return;const card=e.target.closest('[data-kpi-label]');if(card)openKpiDetail(card.dataset.kpiLabel);}); $('kpiGrid').addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-kpi-label]');if(card){e.preventDefault();openKpiDetail(card.dataset.kpiLabel);}}});
-    $('dismissNotice').addEventListener('click',()=>$('dataNotice').hidden=true);
-    $('rbbSearch').addEventListener('input',filterRBB); $('auditSearch').addEventListener('input',renderAudit); $('auditDirection').addEventListener('change',renderAudit); $('auditMateriality').addEventListener('change',renderAudit); $('costSearch').addEventListener('input',renderCosts);
+    listen('kpiGrid','click',e=>{const fav=e.target.closest('[data-favorite-kpi]');if(fav){e.stopPropagation();toggleFavoriteKpi(fav.dataset.favoriteKpi);return;}});
+    listen('periodSelector','change',()=>{invalidateCache();refreshCurrent(true);}); listen('compareSelector','change',()=>{invalidateCache();refreshCurrent(true);}); listen('kpiGrid','click',e=>{if(e.target.closest('[data-favorite-kpi]'))return;const card=e.target.closest('[data-kpi-label]');if(card)openKpiDetail(card.dataset.kpiLabel);}); listen('kpiGrid','keydown',e=>{if(e.key==='Enter'||e.key===' '){const card=e.target.closest('[data-kpi-label]');if(card){e.preventDefault();openKpiDetail(card.dataset.kpiLabel);}}});
+    listen('dismissNotice','click',()=>{const notice=$('dataNotice');if(notice)notice.hidden=true;});
+    listen('rbbSearch','input',filterRBB); listen('auditSearch','input',renderAudit); listen('auditDirection','change',renderAudit); listen('auditMateriality','change',renderAudit); listen('costSearch','input',renderCosts);
     document.querySelectorAll('[data-export-table]').forEach(b=>b.addEventListener('click',()=>exportTable(b.dataset.exportTable)));
     document.querySelectorAll('[data-report]').forEach(b=>b.addEventListener('click',()=>buildReport(b.dataset.report)));
-    $('exportExecutive').addEventListener('click',()=>{buildReport('executive');setTimeout(()=>window.print(),150)}); $('printReport').addEventListener('click',()=>window.print()); $('downloadReportCsv').addEventListener('click',downloadReportCsv);
-    $('runSimulation').addEventListener('click',runSimulation); $('fileUpload').addEventListener('change',e=>readImportFile(e.target.files?.[0]));
-    $('uploadZone').addEventListener('dragover',e=>{e.preventDefault();$('uploadZone').classList.add('dragging')}); $('uploadZone').addEventListener('dragleave',()=>$('uploadZone').classList.remove('dragging')); $('uploadZone').addEventListener('drop',e=>{e.preventDefault();$('uploadZone').classList.remove('dragging');readImportFile(e.dataTransfer.files?.[0])});
-    $('confirmImport').addEventListener('click',confirmImport); $('cancelImport').addEventListener('click',cancelImport); $('reloadDatabase').addEventListener('click',loadDatabase); $('manualForm').addEventListener('submit',saveManual); $('reloadManual').addEventListener('click',loadManual); $('loadTargets').addEventListener('click',loadTargets); $('saveTargets').addEventListener('click',saveTargets); $('actionForm').addEventListener('submit',saveAction);
+    listen('exportExecutive','click',()=>{buildReport('executive');setTimeout(()=>window.print(),150)}); listen('printReport','click',()=>window.print()); listen('downloadReportCsv','click',downloadReportCsv);
+    listen('runSimulation','click',runSimulation); listen('fileUpload','change',e=>readImportFile(e.target.files?.[0]));
+    listen('uploadZone','dragover',e=>{e.preventDefault();$('uploadZone')?.classList.add('dragging')}); listen('uploadZone','dragleave',()=>$('uploadZone')?.classList.remove('dragging')); listen('uploadZone','drop',e=>{e.preventDefault();$('uploadZone')?.classList.remove('dragging');readImportFile(e.dataTransfer.files?.[0])});
+    listen('confirmImport','click',confirmImport); listen('cancelImport','click',cancelImport); listen('reloadDatabase','click',loadDatabase); listen('manualForm','submit',saveManual); listen('reloadManual','click',loadManual); listen('loadTargets','click',loadTargets); listen('saveTargets','click',saveTargets); listen('actionForm','submit',saveAction);
   }
   function fillPeriodSelectors(){const p=$('periodSelector'),c=$('compareSelector'),m=$('manualPeriod'); p.replaceChildren();c.replaceChildren();m.replaceChildren(); if(!state.periods.length){p.add(new Option('Belum ada data',''));c.add(new Option('—',''));} else {state.periods.forEach((x,i)=>{p.add(new Option(x,x));c.add(new Option(x,x));m.add(new Option(x,x));if(i===1)c.value=x;});} }
   function initTheme(){const saved=safeStorageGet('prime_theme');document.body.dataset.theme=['light','dark','contrast'].includes(saved)?saved:'dark';state.dashboardMode=safeStorageGet('prime_dashboard_mode')==='analyst'?'analyst':'executive';updateThemeIcon();updateDashboardModeButton();}

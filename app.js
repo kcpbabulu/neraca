@@ -155,11 +155,48 @@
     clearSession(); state.cache.clear(); state.pending.clear(); state.periods=[]; state.kpi=[]; state.dashboard=null; state.rbb=null; state.renbis=[]; state.xray=[]; state.movers=null; state.trends=null; state.costs=null; state.manual=[]; state.database=[]; state.targets={}; state.actions=[]; showLogin(''); $('loginPassword').value=''; $('loginUsername').focus();
   }
   function boot() {
-    $('loginForm').addEventListener('submit',handleLogin);
-    $('togglePassword').addEventListener('click',()=>{const input=$('loginPassword'),show=input.type==='password';input.type=show?'text':'password';$('togglePassword').setAttribute('aria-label',show?'Sembunyikan password':'Tampilkan password');$('togglePassword').innerHTML=show?'<i class="fa-solid fa-eye-slash"></i>':'<i class="fa-solid fa-eye"></i>';});
-    $('logoutBtn').addEventListener('click',logout);
-    if(sessionToken()) { showApp(); init().catch(err=>{clearSession();showLogin(err.message||'Sesi berakhir. Silakan login kembali.');}); }
-    else showLogin('');
+    // Defensif terhadap index.html dan app.js yang berasal dari versi berbeda.
+    const loginForm = $('loginForm');
+    const loginScreen = $('loginScreen');
+    const loginUsername = $('loginUsername');
+    const loginPassword = $('loginPassword');
+    if (!loginForm || !loginScreen || !loginUsername || !loginPassword) {
+      console.error(
+        'PRIME Ledger: struktur halaman login tidak cocok dengan app.js. ' +
+        'Pastikan index.html dan app.js berasal dari rilis yang sama, lalu deploy ulang dan bersihkan cache browser/CDN.',
+        { loginForm: !!loginForm, loginScreen: !!loginScreen, loginUsername: !!loginUsername, loginPassword: !!loginPassword }
+      );
+      if (loginScreen) {
+        loginScreen.hidden = false;
+        const message = document.createElement('p');
+        message.className = 'login-error';
+        message.setAttribute('role', 'alert');
+        message.textContent = 'Versi halaman tidak sinkron. Muat ulang aplikasi atau hubungi administrator.';
+        loginScreen.querySelector('.login-card')?.appendChild(message);
+      }
+      return;
+    }
+
+    loginForm.addEventListener('submit', handleLogin);
+    $('togglePassword')?.addEventListener('click', () => {
+      const input = $('loginPassword');
+      const toggle = $('togglePassword');
+      if (!input || !toggle) return;
+      const show = input.type === 'password';
+      input.type = show ? 'text' : 'password';
+      toggle.setAttribute('aria-label', show ? 'Sembunyikan password' : 'Tampilkan password');
+      toggle.innerHTML = show ? '<i class="fa-solid fa-eye-slash"></i>' : '<i class="fa-solid fa-eye"></i>';
+    });
+    $('logoutBtn')?.addEventListener('click', logout);
+    if (sessionToken()) {
+      showApp();
+      init().catch(err => {
+        clearSession();
+        showLogin(err.message || 'Sesi berakhir. Silakan login kembali.');
+      });
+    } else {
+      showLogin('');
+    }
   }
   document.addEventListener('DOMContentLoaded',boot);
 })();

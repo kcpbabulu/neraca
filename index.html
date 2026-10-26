@@ -18,6 +18,21 @@
 <body data-theme="dark">
   <div id="toastRegion" class="toast-region" aria-live="polite"></div>
   <div id="globalLoader" class="global-loader" hidden><div class="loader-card"><span class="spinner"></span><span id="loaderText">Memuat data…</span></div></div>
+  <section id="loginScreen" class="login-screen" aria-labelledby="loginTitle">
+    <form id="loginForm" class="login-card" autocomplete="on">
+      <div class="login-brand-mark"><i class="fa-solid fa-chart-line"></i></div>
+      <p class="eyebrow">BANKING INTELLIGENCE PLATFORM</p>
+      <h1 id="loginTitle">PRIME Ledger</h1>
+      <p class="login-subtitle">Masuk untuk melanjutkan ke Executive Banking Suite.</p>
+      <label for="loginUsername">Username</label>
+      <input id="loginUsername" name="username" type="text" autocomplete="username" maxlength="40" required autofocus>
+      <label for="loginPassword">Password</label>
+      <div class="password-field"><input id="loginPassword" name="password" type="password" autocomplete="current-password" required><button type="button" id="togglePassword" class="password-toggle" aria-label="Tampilkan password"><i class="fa-solid fa-eye"></i></button></div>
+      <p id="loginError" class="login-error" role="alert" hidden></p>
+      <button id="loginSubmit" class="btn btn-primary login-submit" type="submit"><i class="fa-solid fa-right-to-bracket"></i> Masuk</button>
+      <small class="login-footnote"><i class="fa-solid fa-lock"></i> Sesi login diverifikasi oleh backend.</small>
+    </form>
+  </section>
   <div class="app-shell">
     <aside class="sidebar" id="sidebar">
       <a class="brand" href="#dashboard" aria-label="PRIME Ledger beranda"><span class="brand-mark"><i class="fa-solid fa-chart-line"></i></span><span><strong>PRIME</strong><small>LEDGER INTELLIGENCE</small></span></a>
@@ -44,6 +59,7 @@
           <label class="period-control compare-control"><span>Bandingkan</span><select id="compareSelector" aria-label="Periode pembanding"><option value="">—</option></select></label>
           <button class="icon-btn" id="refreshBtn" title="Perbarui data" aria-label="Perbarui data"><i class="fa-solid fa-rotate"></i></button>
           <button class="icon-btn" id="themeToggle" title="Ganti tema" aria-label="Ganti tema"><i class="fa-solid fa-sun"></i></button>
+          <button class="btn btn-secondary logout-btn" id="logoutBtn" title="Keluar dari aplikasi"><i class="fa-solid fa-right-from-bracket"></i><span>Keluar</span></button>
         </div>
       </header>
       <div class="notice-bar" id="dataNotice"><i class="fa-solid fa-circle-info"></i><span>Memuat status data. Verifikasi angka terhadap laporan resmi sebelum digunakan untuk keputusan.</span><button id="dismissNotice" aria-label="Tutup pemberitahuan"><i class="fa-solid fa-xmark"></i></button></div>

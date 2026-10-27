@@ -2,7 +2,7 @@
 (() => {
   'use strict';
   const cfg = window.PRIME_CONFIG || {};
-  const state = { page:'dashboard', periods:[], kpi:[], dashboard:null, rbb:null, renbis:[], xray:[], movers:null, trends:null, costs:null, manual:[], database:[], targets:{}, charts:{}, cache:new Map(), pending:new Map(), selectedImport:null, actions:[], hierarchy:null, reportType:'executive', lastUpdated:null, navRequest:0, notifications:[], recentPages:[], searchItems:[], searchIndex:0, dashboardMode:'executive', tableSort:{}, tablePagination:{}, role:'viewer', anomalyThresholds:{amount:1000000,percent:10} };
+  const state = { page:'dashboard', periods:[], kpi:[], dashboard:null, rbb:null, renbis:[], xray:[], movers:null, trends:null, costs:null, manual:[], database:[], targets:{}, charts:{}, cache:new Map(), pending:new Map(), selectedImport:null, actions:[], hierarchy:null, reportType:'executive', lastUpdated:null, navRequest:0, notifications:[], recentPages:[], searchItems:[], searchIndex:0, dashboardMode:'executive', activeDetail:null, detailCompareOverride:'', tableSort:{}, tablePagination:{}, role:'viewer', anomalyThresholds:{amount:1000000,percent:10} };
   const $ = (id) => document.getElementById(id);
   let eventsBound = false;
   const AUTH_TOKEN_KEY = 'prime_ledger_session_token';
@@ -97,7 +97,7 @@
     };
     document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>showPage(b.dataset.page)));
     listen('menuToggle','click',()=>{const open=document.body.classList.toggle('nav-open');$('menuToggle')?.setAttribute('aria-expanded',String(open));}); listen('mobileToolsToggle','click',()=>{const open=document.body.classList.toggle('mobile-tools-open');$('mobileToolsToggle')?.setAttribute('aria-expanded',String(open));if(open){setTimeout(()=>$('periodSelector')?.focus({preventScroll:true}),80);}}); document.addEventListener('click',e=>{if(!e.target.closest('.topbar')&&document.body.classList.contains('mobile-tools-open')){document.body.classList.remove('mobile-tools-open');$('mobileToolsToggle')?.setAttribute('aria-expanded','false');}}); listen('mobileBackdrop','click',()=>{document.body.classList.remove('nav-open');$('menuToggle')?.setAttribute('aria-expanded','false');});
-    listen('themeToggle','click',toggleTheme); listen('refreshBtn','click',()=>refreshCurrent(true));
+    listen('detailCloseTop','click',()=>{const d=$('detailDialog');if(d?.open)d.close();});listen('saveDetailInsight','click',savePrimeInsight);listen('openSavedInsights','click',openSavedInsights);listen('exportDetailData','click',exportPrimeDetail);document.querySelectorAll('[data-detail-tab]').forEach(b=>b.addEventListener('click',()=>applyPrimeDetailTab(b.dataset.detailTab)));listen('detailComparePeriod','change',async e=>{state.detailCompareOverride=e.target.value||'';if($('detailContext'))$('detailContext').textContent=`Periode ${period()||'—'} · Pembanding ${state.detailCompareOverride||comparePeriod()||'—'}`;if(state.activeDetail){toast('Memperbarui rincian dengan periode pembanding pilihan…','info');await loadDetailTrend(state.activeDetail);}else toast('Pembanding popup diperbarui untuk rincian berikutnya.','info');});installPrimeDetailEnhancements();$('detailDialog')?.addEventListener('close',()=>{state.detailCompareOverride='';state.activeDetail=null;Object.entries(state.charts).forEach(([id,c])=>{if(/detail|Interactive/i.test(id)){try{c.destroy();}catch(_){}delete state.charts[id];}});});listen('themeToggle','click',toggleTheme); listen('refreshBtn','click',()=>refreshCurrent(true));
     listen('globalSearchBtn','click',openCommandPalette); listen('dashboardModeToggle','click',toggleDashboardMode);
     ['auditTable','costTable','moversTable'].forEach(id=>{const table=$(id);table?.querySelector('thead')?.addEventListener('click',e=>{const th=e.target.closest('th');if(th)sortTableByHeader(table,th);});}); listen('notificationBtn','click',openNotificationCenter); listen('workspaceBtn','click',openWorkspace); listen('mobileMoreBtn','click',()=>{const open=document.body.classList.toggle('nav-open');$('menuToggle')?.setAttribute('aria-expanded',String(open));}); listen('anomalySettingsBtn','click',openAnomalySettings); listen('anomalySettingsForm','submit',saveAnomalySettings); listen('resetAnomalyThresholds','click',resetAnomalyThresholds); listen('refreshAuditTrail','click',loadAuditTrail); listen('globalSearchInput','input',renderGlobalSearch); listen('globalSearchInput','keydown',handleGlobalSearchKeys); listen('saveCurrentView','click',saveCurrentView); listen('clearNotifications','click',clearNotifications); listen('openAuditFromInsight','click',()=>showPage('audit'));
     document.querySelectorAll('[data-close-dialog]').forEach(b=>b.addEventListener('click',()=>$(b.dataset.closeDialog)?.close()));
@@ -202,8 +202,64 @@
   function clearBusy(){const loader=$('globalLoader');if(loader)loader.hidden=true;document.body.classList.remove('is-busy');}
   function openDetailShell(title){
     $('detailTitle').textContent=title;
+    if($('detailContext'))$('detailContext').textContent=`Periode ${period()||'—'} · Pembanding ${state.detailCompareOverride||comparePeriod()||'—'}`;
+    const select=$('detailComparePeriod');
+    if(select){const selected=state.detailCompareOverride||'';select.innerHTML='<option value="">Periode aplikasi</option>'+(state.periods||[]).map(p=>`<option value="${escapeHTML(p)}"${String(p)===String(selected)?' selected':''}>${escapeHTML(p)}</option>`).join('');select.value=selected;}
+    if($('detailStatus'))$('detailStatus').textContent='Data mengikuti periode terpilih.';
     $('detailContent').innerHTML='<div class="detail-loading"><span class="spinner"></span><span>Menyiapkan grafik dan rincian…</span></div>';
+    resetPrimeDetailTabs();
     const d=$('detailDialog'); if(!d.open)d.showModal();
+  }
+  function resetPrimeDetailTabs(){document.querySelectorAll('[data-detail-tab]').forEach((b,i)=>{b.classList.toggle('active',i===0);b.setAttribute('aria-selected',String(i===0));});}
+  function classifyPrimeDetailNode(el){
+    const s=`${el.id||''} ${el.className||''} ${el.textContent||''}`.toLowerCase();
+    if(/canvas|chart-wrap|chart-summary|grafik|tren historis|expanded-chart-wrap/.test(s))return 'trend';
+    if(/breakdown|target-popup-list|table-wrap|data-table|rincian akun|komposisi nilai/.test(s))return 'breakdown';
+    if(/sumber:|validasi|provenance|data source|waktu data|rekonsiliasi/.test(s))return 'source';
+    return 'overview';
+  }
+  function enhancePrimeDetail(){
+    const root=$('detailContent');if(!root||root.dataset.enhanced==='1')return;
+    root.dataset.enhanced='1';
+    [...root.children].forEach(el=>{el.dataset.primeSection=classifyPrimeDetailNode(el);});
+    const source=document.createElement('section');source.className='prime-source-panel';source.dataset.primeSection='source';
+    const current=period()||'—',compare=state.detailCompareOverride||comparePeriod()||'—';
+    source.innerHTML=`<h4><i class="fa-solid fa-shield-halved"></i> Asal-usul & validasi</h4><div class="source-grid"><div><span>Periode data</span><strong>${escapeHTML(current)}</strong></div><div><span>Periode pembanding</span><strong>${escapeHTML(compare)}</strong></div><div><span>Menu asal</span><strong>${escapeHTML(document.querySelector('[data-page].active')?.innerText?.trim()||state.page||'PRIME Ledger')}</strong></div><div><span>Waktu dibuka</span><strong>${new Date().toLocaleString('id-ID')}</strong></div></div><p>Gunakan laporan resmi sebagai sumber rekonsiliasi. Label sumber teknis mengikuti informasi yang benar-benar tersedia pada data popup.</p>`;
+    root.appendChild(source);
+    root.querySelectorAll('[data-prime-section]').forEach(el=>{el.dataset.primeSection=el.dataset.primeSection||classifyPrimeDetailNode(el);});
+    applyPrimeDetailTab('overview');
+  }
+  function applyPrimeDetailTab(tab){
+    const root=$('detailContent');if(!root)return;
+    root.querySelectorAll('[data-prime-section]').forEach(el=>{el.hidden=el.dataset.primeSection!==tab;});
+    document.querySelectorAll('[data-detail-tab]').forEach(b=>{const active=b.dataset.detailTab===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',String(active));});
+    if(tab==='trend')setTimeout(()=>Object.values(state.charts).forEach(c=>{try{c.resize();}catch(_){}}),80);
+  }
+  function savePrimeInsight(){
+    const title=$('detailTitle')?.textContent||'Rincian';
+    const snapshot={title,page:state.page,period:period(),compare:state.detailCompareOverride||comparePeriod(),savedAt:new Date().toISOString(),summary:($('detailContent')?.innerText||'').slice(0,1600)};
+    let items=[];try{items=JSON.parse(localStorage.getItem('prime_saved_insights')||'[]');}catch(_){}
+    items=items.filter(x=>!(x.title===snapshot.title&&x.period===snapshot.period&&x.compare===snapshot.compare));
+    items.unshift(snapshot);safeStorageSet('prime_saved_insights',JSON.stringify(items.slice(0,50)));
+    $('saveDetailInsight').innerHTML='<i class="fa-solid fa-bookmark"></i> Tersimpan';toast('Analisis disimpan ke Insight Favorit pada perangkat ini.','success');
+  }
+  function openSavedInsights(){
+    let items=[];try{items=JSON.parse(localStorage.getItem('prime_saved_insights')||'[]');}catch(_){}
+    openDetailShell('Insight Favorit');
+    $('detailContext').textContent='Analisis yang disimpan pada perangkat ini';
+    $('detailContent').innerHTML=items.length?`<div class="saved-insight-list">${items.map((x,i)=>`<article class="saved-insight-card"><div><strong>${escapeHTML(x.title||'Rincian')}</strong><p>${escapeHTML(x.page||'')} · ${escapeHTML(x.period||'—')} dibanding ${escapeHTML(x.compare||'—')}</p><small>Disimpan ${escapeHTML(x.savedAt?new Date(x.savedAt).toLocaleString('id-ID'):'—')}</small></div><button type="button" class="btn btn-secondary btn-sm" data-open-saved-insight="${i}">Lihat</button></article>`).join('')}</div>`:'<div class="empty-state">Belum ada analisis tersimpan. Buka rincian lalu tekan Simpan.</div>';
+    $('detailContent').querySelectorAll('[data-open-saved-insight]').forEach(b=>b.addEventListener('click',()=>{const x=items[Number(b.dataset.openSavedInsight)];if(!x)return;$('detailTitle').textContent=x.title||'Insight tersimpan';$('detailContext').textContent=`Snapshot tersimpan · ${x.period||'—'} dibanding ${x.compare||'—'}`;$('detailContent').innerHTML=`<div class="saved-insight-snapshot"><div class="source-grid"><div><span>Menu</span><strong>${escapeHTML(x.page||'—')}</strong></div><div><span>Periode</span><strong>${escapeHTML(x.period||'—')}</strong></div><div><span>Pembanding</span><strong>${escapeHTML(x.compare||'—')}</strong></div><div><span>Waktu simpan</span><strong>${escapeHTML(x.savedAt?new Date(x.savedAt).toLocaleString('id-ID'):'—')}</strong></div></div><pre>${escapeHTML(x.summary||'Tidak ada ringkasan')}</pre><p class="muted">Ini snapshot saat disimpan, bukan data live. Untuk angka terbaru, buka kembali menu asal dan muat rincian ulang.</p></div>`;delete $('detailContent').dataset.enhanced;enhancePrimeDetail();})); 
+  }
+  function exportPrimeDetail(){
+    const root=$('detailContent');if(!root)return;
+    const rows=[];
+    root.querySelectorAll('.summary-row,.detail-breakdown-card,.chart-summary-chip,.target-popup-row,tr').forEach(el=>{if(el.closest('[hidden]'))return;const cells=[...el.querySelectorAll('th,td')].map(x=>x.innerText.trim());rows.push(cells.length?cells:[el.innerText.trim()]);});
+    const data=rows.length?rows:[[$('detailTitle')?.innerText||'Rincian'],[root.innerText]];
+    downloadBlob('\ufeff'+data.map(row=>row.map(v=>'"'+String(v??'').replace(/"/g,'""')+'"').join(',')).join('\r\n'),`prime-detail-${(state.page||'analisis')}-${period()||'data'}.csv`,'text/csv;charset=utf-8;');
+    toast('Ekspor rincian dimulai.','success');
+  }
+  function installPrimeDetailEnhancements(){
+    const root=$('detailContent');if(root&&!root.dataset.observer){root.dataset.observer='1';new MutationObserver(()=>{if(!root.querySelector('.prime-source-panel'))delete root.dataset.enhanced;if(root.dataset.enhanced!=='1')enhancePrimeDetail();}).observe(root,{childList:true});}
   }
   function renderDetailLineChart(canvasId,data,label){
     if(!window.Chart)return;
@@ -221,11 +277,12 @@
     state.charts[canvasId]=new Chart(el.getContext('2d'),{type:'doughnut',data:{labels:items.map(x=>x.label),datasets:[{data:items.map(x=>Number(x.value)||0),backgroundColor:[getCss('--primary'),getCss('--success'),getCss('--warning'),getCss('--danger'),'#8b5cf6'],borderWidth:1}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:getCss('--text'),boxWidth:12}},tooltip:{callbacks:{label:c=>`${c.label}: ${idr(c.parsed)}`}}}}});
   }
   async function loadDetailTrend({label='',gl='',desc=''}={}){
+    state.activeDetail={label,gl,desc};
     const d=$('detailDialog'); const title=gl?`Tren Saldo Akun — ${gl}`:`Rincian KPI — ${label}`;
     openDetailShell(title);
     setBusy('Memuat histori saldo dan grafik…');
     try{
-      const data=await api('getDetailTrend',{p1:period(),p2:comparePeriod(),p3:gl,p4:label},'GET',{force:true,ttl:0,timeout:45000});
+      const data=await api('getDetailTrend',{p1:period(),p2:state.detailCompareOverride||comparePeriod(),p3:gl,p4:label},'GET',{force:true,ttl:0,timeout:45000});
       const k=state.kpi.find(x=>x.label===label);
       const rows=gl?(state.xray||[]).filter(x=>String(x.gl)===String(gl)):[];
       const curr=gl?(rows[0]?.curr??data.current):(k?.val??data.current);

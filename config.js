@@ -5,7 +5,7 @@
  */
 window.PRIME_CONFIG = Object.freeze({
   API_URL: "https://script.google.com/macros/s/AKfycbzk13LKDjp_8CzGWiaRlBih9SL0HXmnq9Gh9PmgxKfKsGH0X4j1tpXT47DQjEXbnxoW/exec", // Paste the public Apps Script Web App /exec URL here before deployment.
-  APP_VERSION: '1.6.3',
+  APP_VERSION: '1.6.4',
   CACHE_TTL_MS: 60000,
   ENABLE_MUTATIONS: true
 });

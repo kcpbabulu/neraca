@@ -299,3 +299,29 @@ dialog::backdrop{background:rgba(5,12,27,.58);backdrop-filter:blur(7px);-webkit-
 .loader-card{margin:auto;max-width:min(420px,calc(100vw - 32px));width:max-content;min-width:min(240px,calc(100vw - 48px));justify-content:center}
 .detail-loading{min-height:180px;display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px}
 @media(prefers-reduced-motion:reduce){dialog.confirm-dialog[open],dialog.detail-dialog[open]{animation:none!important}}
+
+/* v1.6.5 — dense mobile executive board, compact audit pagination, navigation feedback */
+@media(max-width:760px){
+ .dashboard-actions{display:flex!important;gap:8px;justify-content:flex-end;flex-wrap:nowrap}
+ .executive-icon-action{width:42px;height:42px;min-width:42px;padding:0!important;display:inline-flex;align-items:center;justify-content:center;gap:0;font-size:0}
+ .executive-icon-action i{font-size:16px;margin:0!important}
+ .executive-icon-action span{display:none!important}
+ .kpi-grid,.kpi-grid.compact,.mover-grid,.summary-grid,.content-grid.two-col,.ratio-grid,.financial-card-grid,.dashboard-card-grid{grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:10px!important}
+ .kpi-card,.summary-card,.mover-card,.insight-card,.panel{min-width:0}
+ .kpi-card{padding:13px!important}
+ .kpi-card .kpi-value{font-size:clamp(16px,4.5vw,22px);overflow-wrap:anywhere}
+ .kpi-card .kpi-label{font-size:11px;line-height:1.3}
+ .mover-grid .mover-card{padding:12px!important}
+ .content-grid.two-col>.panel{min-width:0}
+ .audit-pagination-top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin:12px 0;padding:10px;background:var(--panel2);border:1px solid var(--line);border-radius:14px}
+ .audit-pagination-top button{min-height:38px;padding:7px 10px;font-size:12px}
+ .audit-pagination-top span{font-size:11px;font-weight:700;text-align:center;color:var(--muted)}
+}
+.audit-pagination-top{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:14px 0;padding:12px;background:var(--panel2);border:1px solid var(--line);border-radius:14px}
+.audit-pagination-top button:disabled{opacity:.4;cursor:not-allowed}
+.toast{z-index:13000}
+@media(max-width:390px){
+ .kpi-grid,.kpi-grid.compact,.mover-grid,.summary-grid,.content-grid.two-col,.ratio-grid,.financial-card-grid,.dashboard-card-grid{gap:8px!important}
+ .kpi-card{padding:10px!important}
+ .audit-pagination-top button{font-size:11px;padding:6px 7px}
+}

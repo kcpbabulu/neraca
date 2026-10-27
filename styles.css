@@ -501,3 +501,30 @@ dialog::backdrop{background:rgba(5,12,27,.58);backdrop-filter:blur(7px);-webkit-
  .sidebar{padding-bottom:calc(22px + env(safe-area-inset-bottom))}
 }
 @media(prefers-reduced-motion:reduce){.mobile-bottom-nav button,.sidebar .nav-item,.modern-date-input{transition:none!important}}
+
+/* v1.7.2 — Available-data calendar marks and compact popup action menu */
+.flatpickr-calendar{border:1px solid var(--line)!important;border-radius:16px!important;box-shadow:0 16px 45px rgba(10,25,50,.22)!important;overflow:hidden;font-family:inherit!important}
+.flatpickr-calendar .flatpickr-day{border-radius:10px!important;max-width:38px;height:38px;line-height:38px}
+.flatpickr-calendar .flatpickr-day.prime-date-available{background:#e1f6e8!important;border-color:#e1f6e8!important;color:#126b37!important;font-weight:800;position:relative}
+.flatpickr-calendar .flatpickr-day.prime-date-available::after{content:"";position:absolute;bottom:3px;left:50%;transform:translateX(-50%);width:4px;height:4px;border-radius:50%;background:#16a34a}
+.flatpickr-calendar .flatpickr-day.prime-date-available.selected,.flatpickr-calendar .flatpickr-day.prime-date-available.startRange,.flatpickr-calendar .flatpickr-day.prime-date-available.endRange{background:#15803d!important;border-color:#15803d!important;color:#fff!important}
+.flatpickr-calendar .flatpickr-day.disabled,.flatpickr-calendar .flatpickr-day.disabled:hover{background:transparent!important;color:var(--muted)!important;opacity:.45}
+.prime-detail-actions{position:relative;display:flex;align-items:center;gap:9px}
+.prime-detail-tools{position:relative;flex:none}
+.prime-detail-tools>summary{list-style:none;display:flex;align-items:center;justify-content:center;gap:8px;min-height:38px;padding:8px 13px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text);font-size:12px;font-weight:750;cursor:pointer}
+.prime-detail-tools>summary::-webkit-details-marker{display:none}
+.prime-detail-tools>summary i{color:var(--primary);font-size:16px}
+.prime-detail-tools[open]>summary{border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 12%,transparent)}
+.prime-detail-tools-menu{position:absolute;right:0;top:calc(100% + 8px);z-index:30;min-width:205px;padding:7px;display:flex;flex-direction:column;gap:4px;border:1px solid var(--line);border-radius:14px;background:var(--panel);box-shadow:0 14px 38px rgba(10,25,50,.22)}
+.prime-detail-tools-menu .btn{width:100%;justify-content:flex-start;gap:10px;padding:10px 12px;border:0;background:transparent;text-align:left;font-size:12px}
+.prime-detail-tools-menu .btn:hover{background:var(--panel2)}
+.prime-detail-tools-menu .btn i{width:18px;text-align:center;font-size:14px}
+@media(max-width:760px){
+ .prime-detail-actions{display:flex;align-items:center;flex-wrap:wrap}
+ .prime-detail-actions .detail-compare-control{width:100%;flex:1 0 100%;justify-content:space-between}
+ .prime-detail-tools{margin-left:auto}
+ .prime-detail-tools>summary{min-width:42px;min-height:42px;padding:8px 11px}
+ .prime-detail-tools-menu{position:fixed;right:12px;left:12px;top:auto;bottom:calc(78px + env(safe-area-inset-bottom));min-width:0;max-height:min(55dvh,430px);overflow:auto;border-radius:18px;padding:9px}
+ .prime-detail-tools-menu .btn{min-height:44px;padding:12px}
+ .flatpickr-calendar{width:min(310px,calc(100vw - 24px))!important}
+}

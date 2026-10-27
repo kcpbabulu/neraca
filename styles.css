@@ -241,3 +241,61 @@ table tbody tr{transition:background-color .14s ease}
  .rupiah-target-input{min-width:130px;font-size:14px}
  #moversTable .row-trend-trigger{min-height:32px;margin-top:7px}
 }
+
+
+/* v1.6.4 — compact mobile command button + robust centered modal layout */
+.mobile-tools-toggle{display:none}
+@media(max-width:760px){
+ .topbar{display:grid!important;grid-template-columns:44px minmax(0,1fr) 44px!important;gap:10px!important;align-items:center!important;position:relative}
+ .topbar .mobile-menu{grid-column:1;grid-row:1;width:44px;height:44px}
+ .topbar .page-heading{grid-column:2;grid-row:1;min-width:0}
+ .topbar .page-heading .eyebrow{font-size:8px;line-height:1.25;letter-spacing:.09em;white-space:normal}
+ .topbar .page-heading h1{font-size:clamp(19px,4.8vw,26px);line-height:1.1;margin:3px 0 0;overflow-wrap:anywhere}
+ .mobile-tools-toggle{grid-column:3;grid-row:1;display:flex!important;align-items:center;justify-content:center;width:44px;height:44px;min-width:44px;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--text);box-shadow:0 4px 14px rgba(20,40,80,.06)}
+ .mobile-tools-toggle .mobile-tools-label{display:none}
+ .topbar-actions{display:none!important}
+ body.mobile-tools-open .topbar-actions{display:grid!important;position:fixed!important;z-index:950;left:12px;right:12px;top:calc(env(safe-area-inset-top) + 12px);width:auto!important;max-height:calc(100dvh - env(safe-area-inset-top) - 24px);overflow-y:auto;overscroll-behavior:contain;padding:16px!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important;background:var(--panel)!important;border:1px solid var(--line);border-radius:22px;box-shadow:0 24px 80px rgba(5,15,35,.3);align-content:start}
+ body.mobile-tools-open .topbar-actions::before{content:"Periode & alat aplikasi";grid-column:1/-1;font-size:15px;font-weight:800;color:var(--text);padding:2px 2px 6px}
+ body.mobile-tools-open .topbar-actions .period-control{grid-column:span 3!important;grid-row:auto!important;display:flex!important;min-width:0;width:100%;gap:5px}
+ body.mobile-tools-open .topbar-actions .period-control select{width:100%;min-height:46px;font-size:15px}
+ body.mobile-tools-open .topbar-actions .period-control span{font-size:10px;letter-spacing:.1em}
+ body.mobile-tools-open .topbar-actions .icon-btn,body.mobile-tools-open .topbar-actions .logout-btn{display:flex!important;grid-row:auto!important;grid-column:span 1!important;width:100%!important;min-width:0!important;height:46px;min-height:46px;justify-content:center;align-items:center}
+ body.mobile-tools-open .topbar-actions #logoutBtn{grid-column:span 3!important}
+ body.mobile-tools-open .topbar-actions #logoutBtn span{display:inline!important}
+ body.mobile-tools-open .topbar-actions #globalSearchBtn::after{content:"Cari";font-size:10px;margin-left:5px}
+ body.mobile-tools-open .topbar-actions #notificationBtn::after{content:"Notifikasi";font-size:10px;margin-left:5px}
+ body.mobile-tools-open .topbar-actions #workspaceBtn::after{content:"Workspace";font-size:10px;margin-left:5px}
+ body.mobile-tools-open .topbar-actions #refreshBtn::after{content:"Muat ulang";font-size:10px;margin-left:5px}
+ body.mobile-tools-open .topbar-actions #themeToggle::after{content:"Tema";font-size:10px;margin-left:5px}
+}
+@media(max-width:390px){
+ .topbar{grid-template-columns:40px minmax(0,1fr) 40px!important;gap:8px!important}
+ .topbar .mobile-menu,.mobile-tools-toggle{width:40px;height:40px;min-width:40px}
+ .topbar .page-heading .eyebrow{font-size:7px;letter-spacing:.08em}
+ .topbar .page-heading h1{font-size:19px}
+ body.mobile-tools-open .topbar-actions{left:8px;right:8px;padding:12px!important}
+}
+/* All native dialogs are viewport-centered and their content—not the page—scrolls. */
+dialog.confirm-dialog,dialog.detail-dialog,dialog.command-dialog,dialog.workspace-dialog{
+ position:fixed!important;inset:0!important;margin:auto!important;transform:none;
+ max-width:calc(100vw - 28px)!important;max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom))!important;
+ overflow:hidden;overscroll-behavior:contain;box-sizing:border-box
+}
+dialog.confirm-dialog[open],dialog.detail-dialog[open],dialog.command-dialog[open],dialog.workspace-dialog[open]{animation:primeModalIn .2s cubic-bezier(.2,.75,.25,1) both}
+dialog.detail-dialog{width:min(760px,calc(100vw - 28px))!important}
+dialog.confirm-dialog:not(.detail-dialog){width:min(560px,calc(100vw - 28px))!important}
+dialog.detail-dialog form,dialog.confirm-dialog form{
+ display:flex;flex-direction:column;min-height:0;max-height:calc(100dvh - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom));overflow:hidden
+}
+dialog.detail-dialog form{height:100%;padding:clamp(14px,3vw,24px)}
+dialog.detail-dialog #detailTitle{flex:0 0 auto;line-height:1.2;overflow-wrap:anywhere}
+dialog.detail-dialog #detailContent{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding:0 3px 12px 0}
+dialog.detail-dialog .button-row{flex:0 0 auto;position:relative;padding-top:12px;margin-top:8px;background:var(--panel);border-top:1px solid var(--line)}
+dialog.confirm-dialog:not(.detail-dialog) form{overflow:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
+dialog::backdrop{background:rgba(5,12,27,.58);backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
+@keyframes primeModalIn{from{opacity:0;scale:.985;translate:0 8px}to{opacity:1;scale:1;translate:0 0}}
+.global-loader{position:fixed!important;inset:0!important;z-index:12000!important;display:flex!important;align-items:center!important;justify-content:center!important;padding:calc(16px + env(safe-area-inset-top)) 16px calc(16px + env(safe-area-inset-bottom))!important}
+.global-loader[hidden]{display:none!important}
+.loader-card{margin:auto;max-width:min(420px,calc(100vw - 32px));width:max-content;min-width:min(240px,calc(100vw - 48px));justify-content:center}
+.detail-loading{min-height:180px;display:flex;align-items:center;justify-content:center;gap:12px;text-align:center;padding:24px}
+@media(prefers-reduced-motion:reduce){dialog.confirm-dialog[open],dialog.detail-dialog[open]{animation:none!important}}

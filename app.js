@@ -259,8 +259,21 @@
   async function sharePrimeDetail(mode){
     const dialog=$('detailDialog'),content=$('detailContent');if(!dialog||!content)return;
     const title=$('detailTitle')?.innerText||'Rincian PRIME Ledger';
-    const status=$('detailStatus');if(status)status.textContent=mode==='screenshot'?'Menyiapkan gambar seluruh isi popup…':'Menyiapkan lampiran WhatsApp…';
-    toast(mode==='screenshot'?'Membuat screenshot seluruh popup…':'Menyiapkan data popup untuk WhatsApp…','info',2200);
+    const status=$('detailStatus');
+    const compare=state.detailCompareOverride||comparePeriod()||'—';
+    const plain=(content.innerText||'').replace(/\n{3,}/g,'\n\n').trim();
+    const textMsg=`*PRIME LEDGER | RINGKASAN ANALISIS*\n━━━━━━━━━━━━━━━━━━\n*${title}*\nPeriode data: ${period()||'—'}\nPeriode pembanding: ${compare}\n━━━━━━━━━━━━━━━━━━\n\n${plain.slice(0,6500)}\n\n━━━━━━━━━━━━━━━━━━\n*Catatan:* Ringkasan ini disusun dari tampilan PRIME Ledger pada saat dibagikan. Mohon lakukan verifikasi dan rekonsiliasi terhadap laporan resmi sebelum digunakan sebagai dasar keputusan.\n\n_PRIME Ledger Executive Banking Suite_`;
+    if(mode==='whatsapp'){
+      if(status)status.textContent='Membuka WhatsApp dengan ringkasan popup yang sudah diformat…';
+      const waUrl='https://wa.me/?text='+encodeURIComponent(textMsg);
+      const win=window.open(waUrl,'_blank');
+      if(!win){const a=document.createElement('a');a.href=waUrl;a.target='_blank';a.rel='noopener';document.body.appendChild(a);a.click();a.remove();}
+      toast('WhatsApp dibuka dengan pesan profesional. Pilih kontak atau grup lalu tekan Kirim.','success',5000);
+      if(status)status.textContent='Pesan disiapkan di WhatsApp. Pilih kontak/grup dan tekan Kirim.';
+      return;
+    }
+    if(status)status.textContent='Menyiapkan gambar seluruh isi popup…';
+    toast('Membuat screenshot seluruh popup…','info',2200);
     try{
       if(typeof window.html2canvas!=='function')throw new Error('Pustaka screenshot belum termuat. Periksa koneksi internet lalu coba lagi.');
       const targets=[dialog.querySelector('.prime-detail-header'),dialog.querySelector('.prime-detail-actions'),dialog.querySelector('.prime-detail-tabs'),content,dialog.querySelector('.prime-detail-footer')].filter(Boolean);
@@ -297,11 +310,6 @@
         if(status)status.textContent='Screenshot dibuat dan diunduh. Anda dapat melampirkannya ke grup WhatsApp.';
         if(navigator.share&&navigator.canShare?.({files:[file]})){try{await navigator.share({title, text:`${title} · Periode ${period()||'—'} dibanding ${state.detailCompareOverride||comparePeriod()||'—'}`,files:[file]});toast('Pilih grup WhatsApp pada menu berbagi perangkat.','success',4200);}catch(e){if(e.name!=='AbortError')toast('Gambar diunduh; lampirkan secara manual ke grup WhatsApp.','info',4500);}}
         else toast('Screenshot diunduh. Lampirkan gambar ini secara manual ke grup WhatsApp.','success',4500);
-      }else{
-        const textMsg=`${title}\nPeriode: ${period()||'—'}\nPembanding: ${state.detailCompareOverride||comparePeriod()||'—'}\n\n${(content.innerText||'').slice(0,5000)}\n\nPRIME Ledger — mohon rekonsiliasi dengan laporan resmi.`;
-        if(navigator.share&&navigator.canShare?.({files:[file]})){await navigator.share({title,text:textMsg,files:[file]});toast('Pilih grup WhatsApp pada menu berbagi perangkat.','success',4000);}
-        else{const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);window.open('https://wa.me/?text='+encodeURIComponent(textMsg),'_blank','noopener');toast('Ringkasan dibuka di WhatsApp dan gambar diunduh. Pilih grup, lalu lampirkan gambar.','success',5000);}
-        if(status)status.textContent='Ringkasan siap dibagikan; pilih grup secara manual pada WhatsApp.';
       }
     }catch(err){console.error(err);toast(err.message||'Tidak dapat membuat lampiran popup.','error',5000);if(status)status.textContent='Pembuatan lampiran gagal. Coba ekspor CSV atau ulangi.';}
   }

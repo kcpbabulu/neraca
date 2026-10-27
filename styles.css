@@ -365,3 +365,40 @@ dialog::backdrop{background:rgba(5,12,27,.58);backdrop-filter:blur(7px);-webkit-
  .expanded-chart-summary{grid-template-columns:repeat(2,minmax(0,1fr))}
 }
 @media(prefers-reduced-motion:reduce){.chart-detail-card{transition:none}}
+
+/* v1.6.7 — interactive executive dashboard summaries and Cost Control smart search */
+.dashboard-click-card{cursor:pointer;transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}
+.dashboard-click-card:hover,.dashboard-click-card:focus-visible{outline:none;border-color:var(--primary);box-shadow:0 12px 30px rgba(24,55,99,.10)}
+.dashboard-click-card:active{transform:scale(.997)}
+.target-summary-row{cursor:pointer;border-radius:10px;padding:12px 10px;margin:2px 0;transition:background .16s ease,transform .16s ease}
+.target-summary-row:hover,.target-summary-row:focus-visible{background:var(--bg2);outline:2px solid color-mix(in srgb,var(--primary) 45%,transparent);outline-offset:-2px}
+.target-summary-row:active{transform:scale(.99)}
+.target-popup-list{display:flex;flex-direction:column;gap:7px;margin-top:12px}
+.target-popup-row{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;text-align:left;padding:13px 14px;border:1px solid var(--line);border-radius:13px;background:var(--panel2);color:var(--text);cursor:pointer}
+.target-popup-row span{min-width:0;display:flex;flex-direction:column;gap:4px}
+.target-popup-row strong{font-size:13px}
+.target-popup-row small{color:var(--muted);font-size:12px}
+.target-popup-row>b{font-size:15px;color:var(--primary);white-space:nowrap}
+.cost-smart-search{width:min(100%,440px);min-width:0}
+.cost-smart-search .smart-search-box{width:100%}
+.cost-smart-search .smart-search-hints{padding-top:7px}
+#costAdvancedFilters{margin-top:8px}
+#costAdvancedFilters select{min-width:0;flex:1}
+@media(max-width:760px){
+ .dashboard-interactive-grid{grid-template-columns:minmax(0,1fr)!important}
+ .dashboard-click-card{grid-column:1/-1!important;width:100%;min-width:0}
+ .dashboard-click-card .chart-wrap{height:290px;min-height:260px;width:100%}
+ #targetSummary{width:100%}
+ .target-summary-row{gap:10px}
+ .target-summary-row>span{font-size:12px}
+ .target-summary-row>strong{text-align:right;font-size:13px;overflow-wrap:anywhere}
+ .target-summary-row small{font-size:11px}
+ .cost-smart-search{width:100%;max-width:none;margin-top:10px}
+ #page-cost .panel-head{align-items:stretch;flex-direction:column;gap:10px}
+ #page-cost .panel-head>div{width:100%}
+ #page-cost .smart-search-box input{font-size:13px}
+ #page-cost .smart-search-filter{width:42px;padding:0;font-size:0}
+ #page-cost .smart-search-filter i{font-size:15px}
+ #page-cost .smart-search-hints button{font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){.dashboard-click-card,.target-summary-row{transition:none}}

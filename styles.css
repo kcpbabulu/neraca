@@ -466,3 +466,38 @@ dialog::backdrop{background:rgba(5,12,27,.58);backdrop-filter:blur(7px);-webkit-
 .saved-insight-card p,.saved-insight-card small{display:block;margin:4px 0 0;color:var(--muted);font-size:11px}
 .saved-insight-snapshot pre{white-space:pre-wrap;overflow-wrap:anywhere;font:12px/1.65 inherit;background:var(--panel2);border:1px solid var(--line);padding:14px;border-radius:12px;color:var(--text);margin-top:12px}
 @media(max-width:760px){.prime-detail-actions .btn{padding:8px 7px;font-size:10px}.saved-insight-card{align-items:flex-start}.saved-insight-card .btn{flex:none}}
+
+/* v1.7.1 — Modern calendar controls, mobile navigation and popup sharing */
+.period-source-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;clip-path:inset(50%)!important}
+.calendar-period-control{position:relative}
+.calendar-period-control>span{display:flex;align-items:center;gap:7px}
+.calendar-period-control>span i,.inline-calendar-label i,.detail-calendar-wrap>i{color:var(--primary)}
+.modern-date-input{min-width:0;width:100%;min-height:42px;border:1px solid var(--line);border-radius:12px;padding:9px 11px;background:var(--panel);color:var(--text);font:600 13px/1.3 inherit;box-shadow:0 1px 0 rgba(20,40,80,.02);color-scheme:light dark;transition:border-color .18s,box-shadow .18s,background .18s}
+.modern-date-input:hover{border-color:var(--primary)}
+.modern-date-input:focus-visible{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px color-mix(in srgb,var(--primary) 16%,transparent)}
+.inline-calendar-label{font-size:10px;color:var(--muted);margin-left:5px}
+.detail-calendar-wrap{display:flex;align-items:center;gap:7px;min-width:0}
+.detail-calendar-wrap .modern-date-input{width:auto;max-width:165px;min-height:35px;font-size:11px;padding:7px}
+.detail-compare-control{align-items:center}
+#shareDetailWhatsApp i{color:#16885a}
+#screenshotDetail i{color:var(--primary)}
+.mobile-bottom-nav{padding-bottom:calc(6px + env(safe-area-inset-bottom))}
+.mobile-bottom-nav button{min-width:0;min-height:56px;touch-action:manipulation;transition:background .18s,color .18s,transform .18s}
+.mobile-bottom-nav button:active{transform:scale(.97)}
+.sidebar .nav-item{min-height:44px;border-radius:12px;transition:background .18s,color .18s,transform .18s}
+.sidebar .nav-item:hover{transform:translateX(2px)}
+@media(max-width:760px){
+ .topbar-actions .calendar-period-control{min-width:0;flex:1 1 calc(50% - 8px)}
+ .calendar-period-control>span{font-size:10px;letter-spacing:.07em}
+ .calendar-period-control .modern-date-input{min-height:42px;padding:8px 7px;font-size:12px;border-radius:11px}
+ .detail-calendar-wrap{width:100%}
+ .detail-calendar-wrap .modern-date-input{width:100%;max-width:none;flex:1}
+ .prime-detail-actions{display:flex;align-items:stretch}
+ .prime-detail-actions .detail-compare-control{width:100%;display:flex;flex-direction:row;align-items:center;flex-wrap:wrap}
+ .prime-detail-actions #saveDetailInsight,.prime-detail-actions #openSavedInsights,.prime-detail-actions #exportDetailData,.prime-detail-actions #shareDetailWhatsApp,.prime-detail-actions #screenshotDetail{flex:1 1 calc(33.333% - 6px);min-width:0;min-height:38px;font-size:10px;padding:7px 5px}
+ .mobile-bottom-nav{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:3px}
+ .mobile-bottom-nav button span{font-size:10px;line-height:1.1}
+ .mobile-bottom-nav button i{font-size:17px}
+ .sidebar{padding-bottom:calc(22px + env(safe-area-inset-bottom))}
+}
+@media(prefers-reduced-motion:reduce){.mobile-bottom-nav button,.sidebar .nav-item,.modern-date-input{transition:none!important}}

@@ -557,7 +557,34 @@
   function openAnomalySettings(){const d=$('anomalySettingsDialog');if(!d)return;const t=state.anomalyThresholds||{amount:1000000,percent:10};$('thresholdAmount').value=t.amount;$('thresholdPercent').value=t.percent;d.showModal();}
   function saveAnomalySettings(e){e.preventDefault();const amount=Number($('thresholdAmount').value),percent=Number($('thresholdPercent').value);if(!Number.isFinite(amount)||amount<0||!Number.isFinite(percent)||percent<0||percent>10000){toast('Masukkan ambang nominal dan persentase yang valid.','warning');return;}state.anomalyThresholds={amount,percent};writeLocalJson('prime_anomaly_thresholds',state.anomalyThresholds);$('anomalySettingsDialog').close();renderFinancialIntelligence();toast('Ambang anomali diperbarui pada browser ini.','success');}
   function resetAnomalyThresholds(){state.anomalyThresholds={amount:1000000,percent:10};writeLocalJson('prime_anomaly_thresholds',state.anomalyThresholds);$('thresholdAmount').value=1000000;$('thresholdPercent').value=10;renderFinancialIntelligence();toast('Ambang default dipulihkan.','info');}
-  async function loadAuditTrail(){if(state.role!=='admin'){toast('Audit Trail hanya tersedia untuk admin.','warning');return;}const body=$('auditTrailBody');if(body)body.innerHTML='<tr><td colspan="5" class="empty-state">Memuat audit trail…</td></tr>';try{const rows=await api('getAuditTrail',{},'GET',{force:true,ttl:0});body.innerHTML=Array.isArray(rows)&&rows.length?rows.map(r=>`<tr><td data-label="Waktu">${escapeHTML(r.timestamp||'—')}</td><td data-label="Pengguna">${escapeHTML(r.user||'—')}</td><td data-label="Aksi">${escapeHTML(r.action||'—')}</td><td data-label="Detail">${escapeHTML(r.detail||'—')}</td><td data-label="Status">${escapeHTML(r.status||'—')}</td></tr>`).join(''):'<tr><td colspan="5" class="empty-state">Belum ada catatan audit.</td></tr>';}catch(e){body.innerHTML=`<tr><td colspan="5" class="empty-state">${escapeHTML(e.message)}</td></tr>`;}}
+  async function loadAuditTrail(){
+    if(state.role!=='admin'){
+      toast('Audit Trail hanya tersedia untuk admin.','warning');
+      return;
+    }
+    const panel=$('auditTrailPanel');
+    const body=$('auditTrailBody');
+    // The audit table is optional on older cached HTML versions. Never request
+    // the API or write to innerHTML when its target is not mounted.
+    if(!panel || !body){
+      console.warn('PRIME Ledger: panel Audit Trail tidak tersedia pada halaman ini. Muat ulang frontend versi terbaru.');
+      return;
+    }
+    body.innerHTML='<tr><td colspan="5" class="empty-state">Memuat audit trail…</td></tr>';
+    try{
+      const rows=await api('getAuditTrail',{},'GET',{force:true,ttl:0});
+      // Re-query after await in case the user navigated or the page was rebuilt.
+      const currentBody=$('auditTrailBody');
+      if(!currentBody || !$('auditTrailPanel')) return;
+      currentBody.innerHTML=Array.isArray(rows)&&rows.length
+        ? rows.map(r=>`<tr><td data-label="Waktu">${escapeHTML(r.timestamp||'—')}</td><td data-label="Pengguna">${escapeHTML(r.user||'—')}</td><td data-label="Aksi">${escapeHTML(r.action||'—')}</td><td data-label="Detail">${escapeHTML(r.detail||'—')}</td><td data-label="Status">${escapeHTML(r.status||'—')}</td></tr>`).join('')
+        : '<tr><td colspan="5" class="empty-state">Belum ada catatan audit.</td></tr>';
+    }catch(e){
+      const currentBody=$('auditTrailBody');
+      if(currentBody) currentBody.innerHTML=`<tr><td colspan="5" class="empty-state">${escapeHTML(e?.message||'Audit trail gagal dimuat.')}</td></tr>`;
+      console.error('PRIME Ledger: gagal memuat audit trail',e);
+    }
+  }
 
   function formatRupiahInput(value){
     const n=Number(value)||0;

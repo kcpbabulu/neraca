@@ -119,7 +119,11 @@
   }
   function syncPrimeCalendar(selectId,inputId){const sel=$(selectId),inp=$(inputId);if(sel&&inp)inp.value=sel.value||'';}
   function primeCalendarChanged(inputId,selectId,{required=false,refresh=false}={}){const inp=$(inputId),sel=$(selectId);if(!inp||!sel)return;const val=inp.value;if(!val&&!required){sel.value='';if(refresh)Promise.resolve(refreshCurrent(true));return;}const option=[...sel.options].find(o=>o.value===val);if(option){sel.value=val;sel.dispatchEvent(new Event('change',{bubbles:true}));}else{toast('Tanggal tersebut belum tersedia sebagai periode data. Pilih tanggal yang tersedia.','warning',4200);syncPrimeCalendar(selectId,inputId);}}
-  function fillPeriodSelectors(){const p=$('periodSelector'),c=$('compareSelector'),m=$('manualPeriod');p.replaceChildren();c.replaceChildren();m.replaceChildren();if(!state.periods.length){p.add(new Option('Belum ada data',''));c.add(new Option('—',''));}else{state.periods.forEach((x,i)=>{p.add(new Option(x,x));c.add(new Option(x,x));m.add(new Option(x,x));if(i===1)c.value=x;});}syncPrimeCalendar('periodSelector','periodCalendar');syncPrimeCalendar('compareSelector','compareCalendar');syncPrimeCalendar('manualPeriod','manualPeriodCalendar');}
+  const primeCalendars={};
+  function normalizePeriodDate(value){const s=String(value||'').trim();if(/^\d{4}-\d{2}-\d{2}$/.test(s))return s;const m=s.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);if(m)return `${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`;const d=new Date(s);return Number.isNaN(d.getTime())?'':`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+  function setupPrimeCalendar(inputId,selectId){const input=$(inputId);if(!input||typeof window.flatpickr!=='function')return;const dates=[...new Set((state.periods||[]).map(normalizePeriodDate).filter(Boolean))];if(primeCalendars[inputId])primeCalendars[inputId].destroy();primeCalendars[inputId]=window.flatpickr(input,{dateFormat:'Y-m-d',allowInput:true,disableMobile:true,enable:dates,defaultDate:$(selectId)?.value||null,onDayCreate:(_d,_s,_fp,day)=>{const d=normalizePeriodDate(day.dateObj);if(dates.includes(d)){day.classList.add('prime-date-available');day.setAttribute('title','Data tersedia');day.setAttribute('aria-label',`${day.getAttribute('aria-label')||d} — data tersedia`);}},onChange:(_dates,dateStr)=>{if(dateStr)primeCalendarChanged(inputId,selectId,{required:inputId!=='compareCalendar',refresh:inputId==='periodCalendar'});}});}
+  function refreshPrimeCalendars(){['periodCalendar','compareCalendar','manualPeriodCalendar','detailCompareCalendar'].forEach((id,i)=>setupPrimeCalendar(id,['periodSelector','compareSelector','manualPeriod','detailComparePeriod'][i]));}
+  function fillPeriodSelectors(){const p=$('periodSelector'),c=$('compareSelector'),m=$('manualPeriod');p.replaceChildren();c.replaceChildren();m.replaceChildren();if(!state.periods.length){p.add(new Option('Belum ada data',''));c.add(new Option('—',''));}else{state.periods.forEach((x,i)=>{p.add(new Option(x,x));c.add(new Option(x,x));m.add(new Option(x,x));if(i===1)c.value=x;});}syncPrimeCalendar('periodSelector','periodCalendar');syncPrimeCalendar('compareSelector','compareCalendar');syncPrimeCalendar('manualPeriod','manualPeriodCalendar');refreshPrimeCalendars();}
   function initTheme(){const saved=safeStorageGet('prime_theme');document.body.dataset.theme=['light','dark','contrast'].includes(saved)?saved:'dark';state.dashboardMode=safeStorageGet('prime_dashboard_mode')==='analyst'?'analyst':'executive';updateThemeIcon();updateDashboardModeButton();}
   function toggleTheme(){const modes=['dark','light','contrast'],current=document.body.dataset.theme||'dark',next=modes[(modes.indexOf(current)+1)%modes.length];document.body.dataset.theme=next;safeStorageSet('prime_theme',next);updateThemeIcon();Object.values(state.charts).forEach(ch=>{if(ch){ch.options.plugins.legend.labels.color=getCss('--muted');ch.options.scales?.x?.ticks&&(ch.options.scales.x.ticks.color=getCss('--muted'));ch.options.scales?.y?.ticks&&(ch.options.scales.y.ticks.color=getCss('--muted'));ch.update('none');}});toast(`Tema ${next==='contrast'?'High Contrast':next==='light'?'Executive Light':'Executive Dark'} diaktifkan.`,'info',2500);}
   function updateThemeIcon(){const mode=document.body.dataset.theme;$('themeToggle').innerHTML=mode==='dark'?'<i class="fa-solid fa-sun"></i>':mode==='light'?'<i class="fa-solid fa-circle-half-stroke"></i>':'<i class="fa-solid fa-eye"></i>';const label=mode==='dark'?'Ganti ke tema terang':mode==='light'?'Ganti ke tema kontras tinggi':'Ganti ke tema gelap';$('themeToggle').title=label;$('themeToggle').setAttribute('aria-label',label);}
@@ -206,7 +210,7 @@
     $('detailTitle').textContent=title;
     if($('detailContext'))$('detailContext').textContent=`Periode ${period()||'—'} · Pembanding ${state.detailCompareOverride||comparePeriod()||'—'}`;
     const select=$('detailComparePeriod');
-    if(select){const selected=state.detailCompareOverride||'';select.innerHTML='<option value="">Periode aplikasi</option>'+(state.periods||[]).map(p=>`<option value="${escapeHTML(p)}"${String(p)===String(selected)?' selected':''}>${escapeHTML(p)}</option>`).join('');select.value=selected;syncPrimeCalendar('detailComparePeriod','detailCompareCalendar');}
+    if(select){const selected=state.detailCompareOverride||'';select.innerHTML='<option value="">Periode aplikasi</option>'+(state.periods||[]).map(p=>`<option value="${escapeHTML(p)}"${String(p)===String(selected)?' selected':''}>${escapeHTML(p)}</option>`).join('');select.value=selected;syncPrimeCalendar('detailComparePeriod','detailCompareCalendar');setupPrimeCalendar('detailCompareCalendar','detailComparePeriod');}
     if($('detailStatus'))$('detailStatus').textContent='Data mengikuti periode terpilih.';
     $('detailContent').innerHTML='<div class="detail-loading"><span class="spinner"></span><span>Menyiapkan grafik dan rincian…</span></div>';
     resetPrimeDetailTabs();
@@ -260,10 +264,30 @@
     try{
       if(typeof window.html2canvas!=='function')throw new Error('Pustaka screenshot belum termuat. Periksa koneksi internet lalu coba lagi.');
       const targets=[dialog.querySelector('.prime-detail-header'),dialog.querySelector('.prime-detail-actions'),dialog.querySelector('.prime-detail-tabs'),content,dialog.querySelector('.prime-detail-footer')].filter(Boolean);
-      const old=targets.map(el=>({el,height:el.style.height,maxHeight:el.style.maxHeight,overflow:el.style.overflow,position:el.style.position}));
-      targets.forEach(el=>{el.style.height='auto';el.style.maxHeight='none';el.style.overflow='visible';el.style.position='relative';});
-      const canvases=[];for(const el of targets){canvases.push(await window.html2canvas(el,{backgroundColor:getCss('--panel')||'#ffffff',scale:Math.min(2,window.devicePixelRatio||1),useCORS:true,logging:false,windowWidth:Math.max(document.documentElement.clientWidth,el.scrollWidth),height:Math.max(el.scrollHeight,el.offsetHeight)}));}
-      old.forEach(x=>{x.el.style.height=x.height;x.el.style.maxHeight=x.maxHeight;x.el.style.overflow=x.overflow;x.el.style.position=x.position;});
+      const canvases=[];
+      const safeColor=(v,fallback)=>String(v||'').includes('color(')?fallback:(v||fallback);
+      for(const target of targets){
+        const clone=target.cloneNode(true);
+        const originals=[target,...target.querySelectorAll('*')],clones=[clone,...clone.querySelectorAll('*')];
+        for(let i=0;i<clones.length;i++){
+          const original=originals[i],node=clones[i],cs=getComputedStyle(original);
+          node.removeAttribute('id');node.style.cssText='';
+          const props=['display','box-sizing','width','min-width','max-width','height','min-height','max-height','padding','margin','font-family','font-size','font-weight','font-style','line-height','letter-spacing','text-align','white-space','overflow-wrap','word-break','color','background-color','border','border-radius','border-color','border-width','border-style','box-shadow','opacity','align-items','justify-content','gap','flex','flex-direction','grid-template-columns','position'];
+          props.forEach(prop=>{let v=cs.getPropertyValue(prop);if(!v||v==='normal'||v==='none'&&['box-shadow'].includes(prop))return;
+            if(prop.includes('color')||prop==='border'||prop==='box-shadow')v=safeColor(v,prop==='color'?'#202938':'transparent');
+            try{node.style.setProperty(prop,v);}catch(_){}
+          });
+          node.style.setProperty('overflow','visible');
+          node.style.setProperty('max-height','none');
+          if(node.tagName==='BUTTON'){node.style.cursor='default';}
+        }
+        const wrapper=document.createElement('div');wrapper.style.cssText=`position:fixed;left:-100000px;top:0;width:${Math.max(target.scrollWidth,target.clientWidth,320)}px;background:${safeColor(getComputedStyle(target).backgroundColor,'#ffffff')};color:${safeColor(getComputedStyle(target).color,'#202938')};padding:0;z-index:-1;`;
+        wrapper.appendChild(clone);document.body.appendChild(wrapper);
+        try{
+          const canvas=await window.html2canvas(wrapper,{backgroundColor:'#ffffff',scale:Math.min(2,window.devicePixelRatio||1),useCORS:true,logging:false,windowWidth:Math.max(document.documentElement.clientWidth,wrapper.scrollWidth),height:Math.max(wrapper.scrollHeight,wrapper.offsetHeight),onclone:doc=>{doc.querySelectorAll('link[rel="stylesheet"],style').forEach(el=>el.remove());}});
+          canvases.push(canvas);
+        }finally{wrapper.remove();}
+      }
       const width=Math.max(...canvases.map(c=>c.width)),height=canvases.reduce((n,c)=>n+c.height,0);if(height>32000)throw new Error('Popup terlalu panjang untuk satu gambar. Ekspor CSV atau bagi tampilan melalui tab popup.');
       const finalCanvas=document.createElement('canvas');finalCanvas.width=width;finalCanvas.height=height;const ctx=finalCanvas.getContext('2d');ctx.fillStyle=getCss('--panel')||'#ffffff';ctx.fillRect(0,0,width,height);let y=0;canvases.forEach(c=>{ctx.drawImage(c,0,y);y+=c.height;});
       const blob=await new Promise((resolve,reject)=>finalCanvas.toBlob(b=>b?resolve(b):reject(new Error('Gagal membentuk gambar.')),'image/png'));

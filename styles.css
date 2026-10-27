@@ -625,3 +625,50 @@ dialog::backdrop{background:rgba(5,12,27,.58);backdrop-filter:blur(7px);-webkit-
  .report-workflow-actions .btn{justify-content:center;min-height:44px;padding:.6rem .45rem;font-size:.82rem}
  .report-audit-item{display:grid;gap:.25rem}.report-audit-item time{text-align:left}
 }
+
+
+/* v1.9.0 — playful module identity + mobile-first dashboard */
+:root{
+  --prime-blue:#3977f6;--prime-violet:#8064f5;--prime-teal:#12a899;--prime-orange:#f28a3d;
+  --prime-rose:#ed5c8a;--prime-amber:#d99a13;--prime-indigo:#6657d9;--prime-cyan:#139ec4;
+  --prime-green:#26a269;--prime-pink:#d94fbd;
+}
+.page{--module-accent:var(--prime-blue);--module-tint:rgba(57,119,246,.09)}
+#page-dashboard{--module-accent:var(--prime-blue);--module-tint:rgba(57,119,246,.09)}
+#page-rbb{--module-accent:var(--prime-violet);--module-tint:rgba(128,100,245,.10)}
+#page-audit{--module-accent:var(--prime-teal);--module-tint:rgba(18,168,153,.10)}
+#page-trends{--module-accent:var(--prime-orange);--module-tint:rgba(242,138,61,.11)}
+#page-health{--module-accent:var(--prime-rose);--module-tint:rgba(237,92,138,.10)}
+#page-cost{--module-accent:var(--prime-amber);--module-tint:rgba(217,154,19,.12)}
+#page-reports{--module-accent:var(--prime-indigo);--module-tint:rgba(102,87,217,.10)}
+#page-database{--module-accent:var(--prime-cyan);--module-tint:rgba(19,158,196,.10)}
+#page-manual{--module-accent:var(--prime-green);--module-tint:rgba(38,162,105,.10)}
+#page-targets{--module-accent:var(--prime-pink);--module-tint:rgba(217,79,189,.10)}
+.page.active .page-header .eyebrow,.page.active .page-header .section-kicker{color:var(--module-accent)}
+.page.active .panel{border-top-color:color-mix(in srgb,var(--module-accent) 34%,var(--line));}
+.page.active .panel-head h3{ text-decoration-color:var(--module-accent); }
+.page.active .btn-primary{background:var(--module-accent);border-color:var(--module-accent);box-shadow:0 5px 15px color-mix(in srgb,var(--module-accent) 18%,transparent)}
+.page.active .search-input:focus,.page.active input:focus,.page.active select:focus,.page.active textarea:focus{border-color:var(--module-accent);box-shadow:0 0 0 3px var(--module-tint)}
+.superapp-tile{--tile-accent:var(--prime-blue);--tile-tint:rgba(57,119,246,.11);border-color:color-mix(in srgb,var(--tile-accent) 18%,var(--line));transition:transform .18s ease,box-shadow .18s ease,border-color .18s ease;background:linear-gradient(145deg,var(--surface) 65%,var(--tile-tint))}
+.superapp-tile:hover,.superapp-tile:focus-visible{transform:translateY(-2px);border-color:var(--tile-accent);box-shadow:0 10px 24px color-mix(in srgb,var(--tile-accent) 13%,transparent)}
+.superapp-tile i{color:var(--tile-accent);background:var(--tile-tint)}
+.superapp-tile[data-page="dashboard"]{--tile-accent:var(--prime-blue);--tile-tint:rgba(57,119,246,.12)}
+.superapp-tile[data-page="rbb"]{--tile-accent:var(--prime-violet);--tile-tint:rgba(128,100,245,.13)}
+.superapp-tile[data-page="audit"]{--tile-accent:var(--prime-teal);--tile-tint:rgba(18,168,153,.13)}
+.superapp-tile[data-page="trends"]{--tile-accent:var(--prime-orange);--tile-tint:rgba(242,138,61,.14)}
+.superapp-tile[data-page="health"]{--tile-accent:var(--prime-rose);--tile-tint:rgba(237,92,138,.13)}
+.superapp-tile[data-page="cost"]{--tile-accent:var(--prime-amber);--tile-tint:rgba(217,154,19,.15)}
+.superapp-tile[data-page="reports"]{--tile-accent:var(--prime-indigo);--tile-tint:rgba(102,87,217,.13)}
+.superapp-tile[data-page="database"]{--tile-accent:var(--prime-cyan);--tile-tint:rgba(19,158,196,.13)}
+.superapp-tile[data-page="manual"]{--tile-accent:var(--prime-green);--tile-tint:rgba(38,162,105,.13)}
+.superapp-tile[data-page="targets"]{--tile-accent:var(--prime-pink);--tile-tint:rgba(217,79,189,.13)}
+.command-result-icon{color:var(--prime-blue);background:rgba(57,119,246,.10)}
+.command-result:hover,.command-result.is-active{border-color:var(--prime-blue);background:rgba(57,119,246,.07)}
+@media(max-width:700px){
+  /* Workspace tiles duplicate the persistent mobile navigation and crowd the first screen. */
+  .mobile-dashboard-workspace{display:none!important}
+  #page-dashboard .dashboard-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.65rem}
+  #page-dashboard .dashboard-actions .btn{min-height:52px}
+  .page.active .panel{border-top-width:3px}
+}
+@media(prefers-reduced-motion:reduce){.superapp-tile{transition:none}.superapp-tile:hover{transform:none}}
